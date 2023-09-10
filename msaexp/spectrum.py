@@ -571,7 +571,7 @@ def fit_redshift(file='jw02767005001-02-clear-prism-nrs2-2767_11027.spec.fits', 
                               figsize=(16, 8), vel_width=vel_width,
                               ranges=ranges, Rline=Rline,
                               scale_disp=scale_disp,
-                              eazy_templates=None,
+                              eazy_templates=eazy_templates,#!!!!!
                               use_full_dispersion=use_full_dispersion,
                               sys_err=sys_err,
                               **kwargs)
@@ -1476,7 +1476,10 @@ def plot_spectrum(file='jw02767005001-02-clear-prism-nrs2-2767_11027.spec.fits',
     
     sampler = SpectrumSampler(file, **kwargs)
     spec = sampler.spec
-    bspl = sampler.bspline_array(nspline=nspline, get_matrix=True)
+    if nspline > 1:
+        bspl = sampler.bspline_array(nspline=nspline, get_matrix=True)
+    else:
+        bspl = np.nan
 
     # bspl = utils.bspline_templates(wave=spec['wave']*1.e4,
     #                                degree=3,
