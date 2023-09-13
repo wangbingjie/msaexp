@@ -555,7 +555,7 @@ def fit_redshift(file='jw02767005001-02-clear-prism-nrs2-2767_11027.spec.fits', 
                               figsize=(16, 8), vel_width=vel_width,
                               ranges=ranges, Rline=Rline,
                               scale_disp=scale_disp,
-                              eazy_templates=None,
+                              eazy_templates=eazy_templates,
                               use_full_dispersion=use_full_dispersion,
                               sys_err=sys_err,
                               **kwargs)
@@ -861,11 +861,17 @@ def fit_redshift_grid(file='jw02767005001-02-clear-prism-nrs2-2767_11027.spec.fi
     flam[~mask] = np.nan
     eflam[~mask] = np.nan
     
-    spline = utils.bspline_templates(wave=spec['wave']*1.e4, degree=3, df=nspline)
+    try:
+        spline = utils.bspline_templates(wave=spec['wave']*1.e4, degree=3, df=nspline)
+    except:
+        spline = np.nan
     
     chi2 = zgrid*0.
     
-    bspl = utils.bspline_templates(wave=spec['wave']*1.e4, degree=3, df=nspline) #, log=True)
+    try:
+        bspl = utils.bspline_templates(wave=spec['wave']*1.e4, degree=3, df=nspline) #, log=True)
+    except:
+        bspl = {}
     w0 = utils.log_zgrid([spec['wave'].min()*1.e4,
                           spec['wave'].max()*1.e4], 1./Rline)
                                                   
@@ -1173,9 +1179,12 @@ def plot_spectrum(file='jw02767005001-02-clear-prism-nrs2-2767_11027.spec.fits',
     flam[~mask] = np.nan
     eflam[~mask] = np.nan
     
-    bspl = utils.bspline_templates(wave=spec['wave']*1.e4,
-                                   degree=3,
-                                   df=nspline)
+    try:
+        bspl = utils.bspline_templates(wave=spec['wave']*1.e4,
+                                       degree=3,
+                                       df=nspline)
+    except:
+        bspl = {}
                                    
     w0 = utils.log_zgrid([spec['wave'].min()*1.e4,
                           spec['wave'].max()*1.e4], 1./Rline)
@@ -1294,8 +1303,11 @@ def plot_spectrum(file='jw02767005001-02-clear-prism-nrs2-2767_11027.spec.fits',
         fig, ax = plt.subplots(1,1,figsize=figsize)
         axes = [ax]
         
-    _Acont = (_A.T*coeffs)[mask,:][:,:nspline]
-    _Acont[_Acont < 0.001*_Acont.max()] = np.nan
+    if nspline > 0:
+        _Acont = (_A.T*coeffs)[mask,:][:,:nspline]
+        _Acont[_Acont < 0.001*_Acont.max()] = np.nan
+    else:
+        _Acont = np.nan
     
     if (draws is not None) & has_covar:
         with warnings.catch_warnings():
@@ -1344,7 +1356,7 @@ def plot_spectrum(file='jw02767005001-02-clear-prism-nrs2-2767_11027.spec.fits',
             ax.step(wobs[mask], (mdraws.T*unit_conv).T[mask,:],
                     color='r', alpha=np.maximum(1./draws, 0.02), zorder=-100, where='mid')
 
-        if show_cont:
+        if show_cont and np.isfinite(_Acont):
             ax.plot(wobs[mask], (_Acont.T*unit_conv[mask]).T,
                     color='olive', alpha=0.3)
             
